@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>알스타 가격 인상 트래커 · 프리모상사</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --piste:#E4E7EA; --paper:#FBFBFA;
+  --ink:#15181C; --ink2:#5C636D; --ink3:#8A919B;
+  --line:#CDD2D8; --line2:#E4E7EB;
+  --up:#C42B22; --up-bg:#FBEDEC;
+  --down:#0D7D48; --down-bg:#EAF5EF;
+  --flat:#8A919B; --steel:#2B3138;
+  --kr-serif:"Noto Serif KR",serif;
+  --kr:"Pretendard","Noto Sans KR",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--piste);color:var(--ink);font-family:var(--kr);font-size:14px;
+  line-height:1.55;-webkit-font-smoothing:antialiased;padding:22px 16px 64px}
+.wrap{max-width:1120px;margin:0 auto}
+
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink3);margin:0 0 8px}
+.masthead{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+h1{font-family:var(--kr-serif);font-weight:700;font-size:33px;letter-spacing:-.02em;margin:0;line-height:1.15}
+h1 em{font-style:normal;color:var(--up)}
+.sub{color:var(--ink2);font-size:12.5px;margin:6px 0 0}
+.btn{font-family:var(--mono);font-size:11px;letter-spacing:.06em;background:var(--steel);
+  color:#fff;border:0;border-radius:2px;padding:9px 14px;cursor:pointer}
+.btn:hover{background:#000}
+.btn:focus-visible{outline:2px solid var(--up);outline-offset:2px}
+
+/* 시그니처: 피스트 위에 찍히는 가격표 발표 시점 */
+.piste{margin:26px 0 0;background:var(--paper);border:1px solid var(--line);
+  border-radius:3px;padding:20px 22px 12px}
+.piste-head{display:flex;justify-content:space-between;align-items:baseline;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink3);margin-bottom:14px}
+.piste svg{display:block;width:100%;height:100px;overflow:visible}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--ink2);
+  border-top:1px solid var(--line2);margin-top:8px;padding-top:9px}
+.legend b{font-weight:500;color:var(--ink)}
+.dot{display:inline-block;width:8px;height:8px;transform:rotate(45deg);margin-right:6px;vertical-align:1px}
+.dot.full{background:var(--steel)}
+.dot.part{background:var(--paper);border:1.5px solid var(--ink3)}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);margin-top:14px;border-radius:3px;overflow:hidden}
+.stat{background:var(--paper);padding:14px 16px}
+.stat .k{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+.stat .v{font-family:var(--mono);font-size:25px;font-weight:600;letter-spacing:-.02em;margin-top:3px}
+.stat .n{font-size:11.5px;color:var(--ink2);margin-top:1px}
+.stat.hot .v{color:var(--up)}
+
+/* 비교 시점 선택 */
+.compare{margin-top:14px;background:var(--paper);border:1px solid var(--line);border-radius:3px;
+  padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.compare .lb{font-family:var(--mono);font-size:10px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink3)}
+.compare .arrow{font-family:var(--mono);color:var(--ink3)}
+.gapnote{font-size:11.5px;color:var(--ink2);margin-left:auto}
+
+.controls{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tabs{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:3px;overflow:hidden;background:var(--paper)}
+.tab{border:0;background:transparent;font-family:var(--kr);font-size:12.5px;padding:8px 13px;
+  cursor:pointer;color:var(--ink2);border-right:1px solid var(--line2)}
+.tab:last-child{border-right:0}
+.tab[aria-pressed="true"]{background:var(--steel);color:#fff}
+.tab:focus-visible{outline:2px solid var(--up);outline-offset:-2px}
+.field{font-family:var(--kr);font-size:12.5px;padding:8px 11px;border:1px solid var(--line);
+  border-radius:3px;background:var(--paper);color:var(--ink)}
+.field:focus-visible{outline:2px solid var(--steel);outline-offset:-1px}
+#q{min-width:190px;flex:1}
+.toggle{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink2);cursor:pointer;user-select:none}
+
+.tablecard{margin-top:14px;background:var(--paper);border:1px solid var(--line);border-radius:3px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);font-weight:500;text-align:left;padding:11px 14px;
+  border-bottom:1px solid var(--line);background:var(--paper);position:sticky;top:0;z-index:2}
+thead th.num{text-align:right}
+tbody td{padding:9px 14px;border-bottom:1px solid var(--line2);vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr.row{cursor:pointer}
+tbody tr.row:hover td{background:#F2F4F6}
+tbody tr.row:focus-visible{outline:2px solid var(--steel);outline-offset:-2px}
+.cat{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--ink2);
+  border:1px solid var(--line);border-radius:2px;padding:2px 5px;white-space:nowrap}
+.nm{font-weight:500}
+.vr{color:var(--ink2);font-size:12.5px}
+.flag{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:var(--ink3);
+  border-bottom:1px dotted var(--ink3);cursor:help}
+td.num{font-family:var(--mono);font-size:13px;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.num.muted{color:var(--ink3)}
+.pct{font-family:var(--mono);font-size:12.5px;font-weight:500;padding:2px 6px;border-radius:2px;white-space:nowrap}
+.pct.up{color:var(--up);background:var(--up-bg)}
+.pct.down{color:var(--down);background:var(--down-bg)}
+.pct.flat{color:var(--flat)}
+.pct.na{color:var(--ink3);font-size:11px;background:transparent}
+tr.detail td{background:#F2F4F6;padding:0}
+.detail-inner{padding:18px 16px 14px}
+.detail-inner h3{font-family:var(--kr-serif);font-size:15px;margin:0 0 2px;font-weight:600}
+.detail-inner .meta{font-size:11.5px;color:var(--ink2);margin-bottom:10px}
+.chart{width:100%;height:210px;display:block}
+.empty{padding:44px 16px;text-align:center;color:var(--ink2);font-size:13px}
+.empty b{display:block;font-family:var(--kr-serif);font-size:16px;color:var(--ink);margin-bottom:5px;font-weight:600}
+
+details.notes{margin-top:20px;background:var(--paper);border:1px solid var(--line);border-radius:3px}
+details.notes summary{cursor:pointer;padding:13px 18px;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--ink2)}
+details.notes summary:focus-visible{outline:2px solid var(--steel);outline-offset:-2px}
+.notes-body{padding:0 18px 18px;font-size:12.5px;color:var(--ink2);line-height:1.7}
+.notes-body ul{margin:6px 0 14px;padding-left:18px}
+.notes-body li{margin-bottom:4px}
+.notes-body code{font-family:var(--mono);font-size:11.5px;background:#EDEFF2;padding:1px 5px;border-radius:2px}
+.notes-body h4{font-family:var(--kr-serif);font-size:13px;color:var(--ink);margin:16px 0 4px;font-weight:600}
+pre{font-family:var(--mono);font-size:11.5px;background:#EDEFF2;color:var(--steel);
+  padding:12px 14px;border-radius:2px;overflow-x:auto;line-height:1.6;margin:4px 0 0}
+.foot{margin-top:16px;font-size:11px;color:var(--ink3);line-height:1.7}
+
+@media (max-width:760px){
+  h1{font-size:26px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .hide-sm{display:none}
+  td.num{font-size:12px}
+  body{padding:16px 11px 48px}
+  .gapnote{margin-left:0;width:100%}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">Primo Trading Co. · Allstar &amp; Uhlmann 한국 총단독대리점</p>
+  <div class="masthead">
+    <div>
+      <h1>알스타 가격 인상 <em>트래커</em></h1>
+      <p class="sub" id="subline"></p>
+    </div>
+    <button class="btn" id="csv">CSV 내보내기</button>
+  </div>
+
+  <section class="piste">
+    <div class="piste-head"><span>가격표 발표 시점</span><span id="span-label"></span></div>
+    <svg id="piste" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-label="가격표 발표 시점 타임라인"></svg>
+    <div class="legend">
+      <span><i class="dot full"></i><b>전체 가격표 보유</b> — 품목 전체 가격</span>
+      <span><i class="dot part"></i><b>일부 품목만</b> — 추이 차트로 확인한 3개 품목</span>
+    </div>
+  </section>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="compare">
+    <span class="lb">비교</span>
+    <select class="field" id="selA" aria-label="기준 시점"></select>
+    <span class="arrow">→</span>
+    <select class="field" id="selB" aria-label="비교 시점"></select>
+    <span class="gapnote" id="gapnote"></span>
+  </div>
+
+  <div class="controls">
+    <div class="tabs" id="tabs"></div>
+    <input class="field" id="q" type="search" placeholder="품목 검색 (예: 마스크, 스타텍스, 롤백)" aria-label="품목 검색">
+    <select class="field" id="sort" aria-label="정렬 기준">
+      <option value="rate">인상률 높은 순</option>
+      <option value="rate-asc">인상률 낮은 순</option>
+      <option value="diff">인상액 큰 순</option>
+      <option value="price">가격 높은 순</option>
+      <option value="cat">가격표 순서대로</option>
+    </select>
+    <label class="toggle"><input type="checkbox" id="onlyup"> 오른 품목만</label>
+  </div>
+
+  <div class="tablecard">
+    <table>
+      <thead><tr>
+        <th>품목</th>
+        <th class="num hide-sm" id="thA"></th>
+        <th class="num" id="thB"></th>
+        <th class="num hide-sm">차액</th>
+        <th class="num">인상률</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty" hidden><b>해당하는 품목이 없습니다</b>다른 단어로 찾아보거나 카테고리를 전체로 바꿔보세요.</div>
+  </div>
+
+  <details class="notes">
+    <summary>자료 메모 · 다음 가격표 추가하는 법</summary>
+    <div class="notes-body">
+      <h4>이름이 바뀐 것으로 보고 이어붙인 품목</h4>
+      <ul id="renamed"></ul>
+
+      <h4>어느 줄에도 잇지 않은 항목</h4>
+      <ul id="unmapped"></ul>
+      <ul>
+        <li>2025.02 표의 <b>유아용 장갑 33,000원</b> — 2026년 표의 키즈 장갑 2종(Allstar Gripstar / Uhlmann Basic) 중 어느 쪽 후속인지 불분명해서 비워뒀습니다. 총판에 확인되면 채워 넣으면 됩니다.</li>
+      </ul>
+
+      <h4>새 가격표가 오면</h4>
+      <ul>
+        <li><code>SNAPSHOTS</code> 배열 끝에 날짜를 <code>"2026-09-01"</code> 형식으로 넣습니다.</li>
+        <li>각 품목의 <code>p</code> 배열 끝에 같은 순서로 가격을 넣습니다. 가격표에서 빠진 품목은 <code>null</code>.</li>
+        <li>중간 시점 자료를 찾으면 <code>SNAPSHOTS</code>의 해당 위치에 날짜를 끼우고, 모든 품목 <code>p</code> 배열의 같은 위치에 값을 넣으면 됩니다.</li>
+      </ul>
+      <pre>{"c":"에뻬","g":"브레이드","v":"Maraging BF (FIE)","p":[357000,408000,427000,<b>새가격</b>]}</pre>
+    </div>
+  </details>
+
+  <p class="foot" id="foot"></p>
+</div>
+
+<script>
+const DATA = {"snapshots":["2022-09-08","2024-08-03","2025-02-20","2026-03-03","2026-04-06"],"items":[{"i":0,"c":"플러레","g":"세트","v":"Allstar Blade","p":[null,null,156000,169000,176000]},{"i":1,"c":"플러레","g":"세트","v":"Maraging BF (FIE)","p":[236000,273000,310000,349000,365000]},{"i":2,"c":"플러레","g":"브레이드","v":"Allstar Blade","p":[null,null,105000,116000,121000]},{"i":3,"c":"플러레","g":"브레이드","v":"Maraging BF (FIE)","p":[189000,223000,259000,296000,310000]},{"i":4,"c":"플러레","g":"브레이드","v":"Maraging BF (FIE) 블랙","p":[null,null,321000,367000,384000]},{"i":5,"c":"플러레","g":"브레이드","v":"Non-electric (코치용)","p":[null,null,71000,78000,82000]},{"i":6,"c":"플러레","g":"바디와이어","v":"플러레/사브르 공용(신형)","p":[43000,49000,58000,66000,70000]},{"i":7,"c":"플러레","g":"가드","v":"알루미늄","p":[12000,13000,14000,16000,16000]},{"i":8,"c":"플러레","g":"가드","v":"티타늄","p":[null,null,48000,53000,56000]},{"i":9,"c":"플러레","g":"소켓","v":"","p":[9000,10000,10000,10000,11000]},{"i":10,"c":"플러레","g":"손잡이","v":"English","p":[20000,20000,20000,20000,20000]},{"i":11,"c":"플러레","g":"손잡이","v":"Viscont","p":[null,null,20000,20000,20000]},{"i":12,"c":"플러레","g":"쿠션","v":"","p":[3000,4000,4000,4000,5000]},{"i":13,"c":"플러레","g":"폼멜","v":"플러레/에뻬 공용","p":[3000,3000,3000,3000,3000]},{"i":14,"c":"플러레","g":"포인트","v":"본체","p":[12000,16000,16000,18000,19000]},{"i":15,"c":"플러레","g":"포인트","v":"팁","p":[7000,9000,9000,10000,10000]},{"i":16,"c":"플러레","g":"포인트","v":"나사","p":[4000,6000,6000,6000,7000]},{"i":17,"c":"플러레","g":"포인트","v":"스프링","p":[4000,6000,6000,6000,7000]},{"i":18,"c":"플러레","g":"포인트","v":"와이어선","p":[4000,5000,5000,5000,6000]},{"i":19,"c":"플러레","g":"마스크","v":"일반 (1600N)","p":[271000,301000,319000,353000,369000]},{"i":20,"c":"플러레","g":"마스크","v":"Vario (1600N)","p":[null,null,342000,377000,395000]},{"i":21,"c":"플러레","g":"전기덮개","v":"일반 (마스크케이블 포함)","p":[null,null,59000,64000,67000]},{"i":22,"c":"플러레","g":"전기덮개","v":"Vario","p":[null,null,43000,47000,49000]},{"i":23,"c":"플러레","g":"메탈자켓","v":"일반","p":[230000,264000,274000,297000,311000]},{"i":24,"c":"플러레","g":"메탈자켓","v":"울트라","p":[null,null,373000,446000,467000]},{"i":25,"c":"플러레","g":"전도 T셔츠","v":"","p":[null,null,316000,342000,357000]},{"i":26,"c":"에뻬","g":"세트","v":"Allstar Blade","p":[null,null,183000,200000,209000]},{"i":27,"c":"에뻬","g":"세트","v":"Maraging BF (FIE)","p":[327000,379000,428000,484000,506000]},{"i":28,"c":"에뻬","g":"브레이드","v":"Allstar Blade","p":[null,null,112000,124000,130000]},{"i":29,"c":"에뻬","g":"브레이드","v":"Maraging BF (FIE)","p":[262000,307000,357000,408000,427000],"h":{"2021-04":205000,"2021-09":221000,"2023-02":279000,"2023-05":296000,"2023-07":296000,"2023-10":307000,"2024-09":327000}},{"i":30,"c":"에뻬","g":"브레이드","v":"Maraging BF (FIE) 블랙","p":[null,null,407000,466000,488000]},{"i":31,"c":"에뻬","g":"바디와이어","v":"신형","p":[43000,49000,58000,66000,70000]},{"i":32,"c":"에뻬","g":"가드","v":"알루미늄","p":[16000,19000,21000,23000,24000]},{"i":33,"c":"에뻬","g":"소켓","v":"","p":[17000,20000,23000,26000,27000]},{"i":34,"c":"에뻬","g":"손잡이","v":"Viscont","p":[null,null,20000,20000,20000]},{"i":35,"c":"에뻬","g":"쿠션","v":"천/패드","p":[3000,4000,4000,4000,5000]},{"i":36,"c":"에뻬","g":"포인트","v":"본체","p":[14000,16000,16000,18000,19000]},{"i":37,"c":"에뻬","g":"포인트","v":"팁","p":[8000,9000,9000,9000,10000]},{"i":38,"c":"에뻬","g":"포인트","v":"나사","p":[4000,6000,6000,6000,7000]},{"i":39,"c":"에뻬","g":"포인트","v":"스프링 (소/대)","p":[4000,6000,6000,6000,7000]},{"i":40,"c":"에뻬","g":"포인트","v":"와이어선","p":[5000,6000,6000,6000,7000]},{"i":41,"c":"에뻬","g":"후렌치","v":"손잡이 알스타(플라스틱)","p":[null,null,9000,9000,9000]},{"i":42,"c":"에뻬","g":"후렌치","v":"손잡이 프리모(고무)","p":[25000,29000,29000,29000,29000]},{"i":43,"c":"에뻬","g":"후렌치","v":"폼멜","p":[10000,10000,10000,10000,11000]},{"i":44,"c":"에뻬","g":"마스크","v":"일반 (1600N)","p":[256000,282000,300000,332000,347000]},{"i":45,"c":"사브르","g":"세트","v":"Allstar Blade","p":[108000,null,151000,167000,177000]},{"i":46,"c":"사브르","g":"세트","v":"Maraging BF (FIE)","p":[null,294000,339000,386000,406000]},{"i":47,"c":"사브르","g":"브레이드","v":"Allstar Blade","p":[47000,null,76000,84000,88000]},{"i":48,"c":"사브르","g":"브레이드","v":"Maraging BF (FIE)","p":[null,223000,264000,303000,317000]},{"i":49,"c":"사브르","g":"가드","v":"일반","p":[33000,37000,39000,44000,46000]},{"i":50,"c":"사브르","g":"가드","v":"국제경기용","p":[null,null,47000,54000,57000]},{"i":51,"c":"사브르","g":"소켓","v":"","p":[9000,11000,11000,13000,13000]},{"i":52,"c":"사브르","g":"손잡이","v":"","p":[6000,8000,8000,8000,9000]},{"i":53,"c":"사브르","g":"쿠션","v":"","p":[3000,4000,4000,4000,5000]},{"i":54,"c":"사브르","g":"폼멜","v":"","p":[6000,7000,8000,9000,10000]},{"i":55,"c":"사브르","g":"가드커버","v":"","p":[4000,4000,5000,5000,6000]},{"i":56,"c":"사브르","g":"커프","v":"선수용","p":[42000,null,49000,56000,58000]},{"i":57,"c":"사브르","g":"전기장갑","v":"FIE (800N)","p":[88000,103000,109000,118000,123000],"note":"2025년 표에는 FIE(1600N)으로 표기"},{"i":58,"c":"사브르","g":"마스크","v":"케이블","p":[10000,11000,11000,13000,13000]},{"i":59,"c":"사브르","g":"마스크","v":"일반 (1600N)","p":[295000,327000,357000,394000,412000]},{"i":60,"c":"사브르","g":"메탈자켓","v":"일반","p":[398000,466000,483000,523000,547000]},{"i":61,"c":"사브르","g":"메탈자켓","v":"울트라","p":[null,null,590000,724000,757000]},{"i":62,"c":"사브르","g":"전도 T셔츠","v":"","p":[145000,null,148000,160000,168000]},{"i":63,"c":"도복·보호구","g":"도복 에코스타 FIE(800N)","v":"상의","p":[null,null,353000,382000,400000]},{"i":64,"c":"도복·보호구","g":"도복 에코스타 FIE(800N)","v":"하의","p":[null,null,235000,254000,266000]},{"i":65,"c":"도복·보호구","g":"도복 에코스타 FIE(800N)","v":"상하 세트","p":[null,null,588000,636000,666000]},{"i":66,"c":"도복·보호구","g":"도복 스타텍스 FIE(800N)","v":"상의","p":[491000,590000,609000,660000,690000]},{"i":67,"c":"도복·보호구","g":"도복 스타텍스 FIE(800N)","v":"하의","p":[332000,404000,412000,446000,467000]},{"i":68,"c":"도복·보호구","g":"도복 스타텍스 FIE(800N)","v":"상하 세트","p":[823000,994000,1021000,1106000,1157000],"h":{"2021-04":660000,"2021-06":703000,"2021-09":739000,"2022-10":870000,"2023-02":937000,"2023-05":994000,"2023-07":994000,"2023-10":994000,"2024-09":1021000}},{"i":69,"c":"도복·보호구","g":"속프로덱타","v":"FIE (800N)","p":[135000,166000,168000,182000,190000]},{"i":70,"c":"도복·보호구","g":"가슴보호대","v":"가슴 프로덱타 (남/여)","p":[42000,52000,52000,57000,60000]},{"i":71,"c":"도복·보호구","g":"가슴보호대","v":"커버 (남/여)","p":[50000,65000,65000,71000,74000]},{"i":72,"c":"도복·보호구","g":"장갑","v":"Combi (일반)","p":[48000,54000,57000,62000,65000]},{"i":73,"c":"도복·보호구","g":"장갑","v":"Gripstar (미끄럼방지)","p":[59000,67000,70000,76000,79000],"h":{"2021-04":46000,"2021-09":52000,"2023-02":61000,"2023-05":65000,"2023-07":67000,"2023-10":67000,"2024-09":70000}},{"i":74,"c":"도복·보호구","g":"장갑","v":"Hyper-X (하이퍼)","p":[null,null,69000,75000,null]},{"i":75,"c":"도복·보호구","g":"스타킹","v":"일반 (Allstar)","p":[21000,26000,26000,29000,30000]},{"i":76,"c":"도복·보호구","g":"스타킹","v":"프로텍","p":[null,40000,40000,43000,45000],"note":"2025년 표에는 '울트라(Allstar, Uhlmann)'로 표기"},{"i":77,"c":"도복·보호구","g":"펜싱화","v":"켐파 Attack Pro Agility","p":[null,null,null,352000,369000]},{"i":78,"c":"도복·보호구","g":"펜싱화","v":"켐파 Attack Multicolor","p":[null,null,207000,235000,246000]},{"i":79,"c":"도복·보호구","g":"펜싱화","v":"켐파 Attack Junior","p":[null,null,118000,128000,134000]},{"i":80,"c":"도복·보호구","g":"펜싱화","v":"나이키 Ballestra2 (골드)","p":[null,null,359000,389000,407000]},{"i":81,"c":"도복·보호구","g":"펜싱화","v":"아자 Junior","p":[null,null,158000,171000,179000]},{"i":82,"c":"코치용","g":"Allstar 프로덱타","v":"조끼 (LW)","p":[321000,357000,357000,386000,404000]},{"i":83,"c":"코치용","g":"Allstar 프로덱타","v":"긴팔 (LW2)","p":[449000,510000,510000,552000,577000]},{"i":84,"c":"코치용","g":"Allstar 프로덱타","v":"반팔 (LW2K)","p":[401000,448000,448000,486000,508000]},{"i":85,"c":"코치용","g":"Allstar 프로덱타","v":"내피쿠션","p":[null,null,80000,86000,90000]},{"i":86,"c":"코치용","g":"Allstar 프로덱타","v":"외피 (MJBL)","p":[null,null,404000,437000,457000]},{"i":87,"c":"코치용","g":"Allstar 프로덱타","v":"내피 (MJB)","p":[null,null,285000,309000,323000]},{"i":88,"c":"코치용","g":"Allstar 프로덱타","v":"팔","p":[144000,162000,162000,176000,184000]},{"i":89,"c":"코치용","g":"Allstar 프로덱타","v":"다리 (한쪽)","p":[182000,224000,224000,243000,254000]},{"i":90,"c":"코치용","g":"Allstar 프로덱타","v":"다리 (무릎)","p":[null,null,184000,199000,208000]},{"i":91,"c":"코치용","g":"Allstar 프로덱타","v":"발","p":[null,null,133000,144000,150000]},{"i":92,"c":"코치용","g":"Allstar","v":"장갑","p":[62000,69000,70000,76000,79000]},{"i":93,"c":"코치용","g":"Allstar","v":"소매커프","p":[89000,101000,101000,109000,114000]},{"i":94,"c":"코치용","g":"Allstar","v":"마스크","p":[null,null,218000,241000,252000]},{"i":95,"c":"코치용","g":"Allstar","v":"마스크 덮개","p":[null,null,80000,86000,90000]},{"i":96,"c":"코치용","g":"Uhlmann 프로덱타","v":"조끼","p":[null,null,428000,463000,485000]},{"i":97,"c":"코치용","g":"Uhlmann 프로덱타","v":"긴팔","p":[null,null,613000,664000,695000]},{"i":98,"c":"코치용","g":"Uhlmann 프로덱타","v":"반팔","p":[null,null,538000,583000,609000]},{"i":99,"c":"코치용","g":"Uhlmann 프로덱타","v":"팔","p":[null,null,194000,211000,220000]},{"i":100,"c":"코치용","g":"Uhlmann 프로덱타","v":"발","p":[null,null,310000,335000,351000]},{"i":101,"c":"칼백·소모품","g":"칼백","v":"롤백 RB3 Duo","p":[null,null,597000,646000,676000]},{"i":102,"c":"칼백·소모품","g":"칼백","v":"롤백 RB3 Jumbo","p":[null,null,662000,716000,749000]},{"i":103,"c":"칼백·소모품","g":"칼백","v":"롤백 RB6 Premium","p":[null,null,716000,775000,811000]},{"i":104,"c":"칼백·소모품","g":"칼백","v":"근대오종 롤백 (RB PENT)","p":[null,null,673000,728000,762000]},{"i":105,"c":"칼백·소모품","g":"칼백","v":"개인용 롤백 (RB1-YS)","p":[null,null,216000,234000,245000]},{"i":106,"c":"칼백·소모품","g":"칼백","v":"개인용 칼백 (WS13)","p":[95000,96000,113000,122000,128000]},{"i":107,"c":"칼백·소모품","g":"칼백","v":"보조 칼백 (RB-AT2)","p":[null,null,130000,141000,148000]},{"i":108,"c":"칼백·소모품","g":"칼백","v":"브레이드 커버 (KS)","p":[null,null,20000,22000,23000]},{"i":109,"c":"칼백·소모품","g":"칼백","v":"프리모 개인용 (사각)","p":[null,null,44000,44000,null]},{"i":110,"c":"칼백·소모품","g":"칼백","v":"프리모 개인용 (숄더)","p":[null,null,63000,63000,63000]},{"i":111,"c":"칼백·소모품","g":"칼테이프","v":"2.75m","p":[null,null,9000,9000,10000]},{"i":112,"c":"칼백·소모품","g":"칼테이프","v":"50m","p":[49000,56000,56000,69000,72000]},{"i":113,"c":"칼백·소모품","g":"정비","v":"녹제거제","p":[9000,null,10000,12000,12000]},{"i":114,"c":"칼백·소모품","g":"정비","v":"테스터기","p":[64000,66000,79000,87000,91000]},{"i":115,"c":"칼백·소모품","g":"정비","v":"게이지 (Point)","p":[25000,25000,25000,27000,28000]},{"i":116,"c":"칼백·소모품","g":"정비","v":"웨이트게이지","p":[70000,71000,74000,82000,86000]},{"i":117,"c":"칼백·소모품","g":"정비","v":"공구 가방","p":[null,null,43000,47000,49000]},{"i":118,"c":"칼백·소모품","g":"정비","v":"브레이드 고정벨트","p":[null,null,null,43000,45000]},{"i":119,"c":"칼백·소모품","g":"타올","v":"소 (50×100cm)","p":[18000,27000,30000,32000,34000]},{"i":120,"c":"칼백·소모품","g":"타올","v":"대 (70×140cm)","p":[null,null,43000,46000,48000]},{"i":121,"c":"칼백·소모품","g":"기타","v":"뒤꿈치 보호대","p":[null,null,7000,7000,8000]},{"i":122,"c":"칼백·소모품","g":"기타","v":"타격대 (STK)","p":[null,null,82000,86000,90000]},{"i":123,"c":"칼백·소모품","g":"기타","v":"메탈에이프런","p":[null,null,661000,715000,748000]},{"i":124,"c":"칼백·소모품","g":"기타","v":"마스크 밴드","p":[null,null,10000,11000,11000]},{"i":125,"c":"심판기·시설","g":"심판기","v":"Allstar ATMS-02","p":[null,null,825000,911000,953000]},{"i":126,"c":"심판기·시설","g":"심판기","v":"Allstar FMA-001","p":[null,1844000,1931000,2132000,2230000]},{"i":127,"c":"심판기·시설","g":"심판기","v":"FMA-03 테이블형","p":[7300000,7889000,7889000,8911000,9323000]},{"i":128,"c":"심판기·시설","g":"심판기","v":"FMA-03 한방향스탠드형","p":[8500000,8980000,8980000,9629000,10074000]},{"i":129,"c":"심판기·시설","g":"심판기","v":"FMA-03 양방향스탠드형","p":[null,null,15970000,16310000,17032000]},{"i":130,"c":"심판기·시설","g":"릴","v":"케이블 릴 (2개 1조)","p":[1416000,1742000,1864000,2122000,2218000]},{"i":131,"c":"심판기·시설","g":"릴","v":"릴 보조선 (2개 1조)","p":[124000,128000,164000,180000,188000]},{"i":132,"c":"심판기·시설","g":"릴","v":"릴 소켓 (개당)","p":[null,null,60000,66000,70000]},{"i":133,"c":"심판기·시설","g":"릴","v":"릴 플러그 (개당)","p":[null,null,27000,27000,23000]},{"i":134,"c":"심판기·시설","g":"삐스트","v":"연결집게","p":[20000,20000,23000,26000,27000]},{"i":135,"c":"심판기·시설","g":"프리모","v":"LED 신형보조등 (시설비 별도)","p":[null,null,1113000,1113000,1113000]},{"i":136,"c":"심판기·시설","g":"프리모","v":"공중릴세트 (시설비 별도)","p":[null,null,830000,830000,830000]},{"i":137,"c":"심판기·시설","g":"시설품목","v":"고무줄 (20m)","p":[null,null,63000,63000,63000]},{"i":138,"c":"심판기·시설","g":"시설품목","v":"릴 선 (20m)","p":[null,null,101000,101000,101000]},{"i":139,"c":"심판기·시설","g":"시설품목","v":"도르레 (소2·대2 1조)","p":[null,null,66000,66000,66000]},{"i":140,"c":"키즈","g":"플러레","v":"세트 Allstar Blade(#2)","p":[null,null,153000,166000,173000]},{"i":141,"c":"키즈","g":"플러레","v":"브레이드 Allstar Blade(#2)","p":[null,null,105000,116000,121000]},{"i":142,"c":"키즈","g":"플러레","v":"가드","p":[null,null,12000,14000,14000]},{"i":143,"c":"키즈","g":"플러레","v":"소켓","p":[null,null,10000,10000,11000]},{"i":144,"c":"키즈","g":"플러레","v":"쿠션","p":[null,null,4000,4000,5000]},{"i":145,"c":"키즈","g":"플러레","v":"손잡이","p":[null,null,19000,19000,19000]},{"i":146,"c":"키즈","g":"플러레","v":"폼멜","p":[null,null,3000,3000,3000]},{"i":147,"c":"키즈","g":"플러레","v":"메탈자켓","p":[null,null,247000,267000,280000]},{"i":148,"c":"키즈","g":"플러레","v":"마스크 (350N)","p":[null,null,200000,239000,250000]},{"i":149,"c":"키즈","g":"에뻬","v":"세트 Allstar Blade(#2)","p":[null,null,177000,194000,203000]},{"i":150,"c":"키즈","g":"에뻬","v":"브레이드 Allstar Blade(#2)","p":[null,null,112000,124000,130000]},{"i":151,"c":"키즈","g":"에뻬","v":"가드","p":[null,null,16000,18000,19000]},{"i":152,"c":"키즈","g":"에뻬","v":"소켓","p":[null,null,23000,26000,27000]},{"i":153,"c":"키즈","g":"에뻬","v":"쿠션","p":[null,null,4000,4000,5000]},{"i":154,"c":"키즈","g":"에뻬","v":"손잡이","p":[null,null,19000,19000,19000]},{"i":155,"c":"키즈","g":"에뻬","v":"폼멜","p":[null,null,3000,3000,3000]},{"i":156,"c":"키즈","g":"에뻬","v":"마스크 (350N)","p":[null,null,183000,218000,228000]},{"i":157,"c":"키즈","g":"사브르","v":"세트 Allstar Blade(#3)","p":[null,null,145000,159000,169000]},{"i":158,"c":"키즈","g":"사브르","v":"브레이드 Allstar Blade(#3)","p":[null,null,76000,84000,88000]},{"i":159,"c":"키즈","g":"사브르","v":"가드","p":[null,null,33000,36000,38000]},{"i":160,"c":"키즈","g":"사브르","v":"소켓","p":[null,null,11000,13000,13000]},{"i":161,"c":"키즈","g":"사브르","v":"쿠션","p":[null,null,4000,4000,5000]},{"i":162,"c":"키즈","g":"사브르","v":"손잡이","p":[null,null,8000,8000,9000]},{"i":163,"c":"키즈","g":"사브르","v":"폼멜","p":[null,null,8000,9000,10000]},{"i":164,"c":"키즈","g":"사브르","v":"가드커버","p":[null,null,5000,5000,6000]},{"i":165,"c":"키즈","g":"사브르","v":"메탈자켓","p":[null,null,435000,471000,493000]},{"i":166,"c":"키즈","g":"도복 알파 (350N)","v":"상의","p":[null,null,195000,211000,221000]},{"i":167,"c":"키즈","g":"도복 알파 (350N)","v":"하의","p":[null,null,136000,147000,154000]},{"i":168,"c":"키즈","g":"도복 알파 (350N)","v":"상하 세트","p":[null,null,331000,358000,375000]},{"i":169,"c":"키즈","g":"도복 에코스타 (800N)","v":"상의","p":[null,null,318000,344000,360000]},{"i":170,"c":"키즈","g":"도복 에코스타 (800N)","v":"하의","p":[null,null,211000,229000,239000]},{"i":171,"c":"키즈","g":"도복 에코스타 (800N)","v":"상하 세트","p":[null,null,529000,573000,599000]},{"i":172,"c":"키즈","g":"도복 스타텍스 (800N)","v":"상의","p":[null,null,null,594000,621000]},{"i":173,"c":"키즈","g":"도복 스타텍스 (800N)","v":"하의","p":[null,null,null,402000,420000]},{"i":174,"c":"키즈","g":"도복 스타텍스 (800N)","v":"상하 세트","p":[null,null,null,996000,1041000]},{"i":175,"c":"키즈","g":"보호구","v":"속프로덱타 (FIE)","p":[null,null,151000,163000,171000]},{"i":176,"c":"키즈","g":"보호구","v":"장갑 Allstar (Gripstar)","p":[null,null,null,52000,55000]},{"i":177,"c":"키즈","g":"보호구","v":"장갑 Uhlmann (Basic)","p":[null,null,null,35000,37000]},{"i":178,"c":"키즈","g":"보호구","v":"마스크 (플라스틱) Allstar","p":[null,null,87000,92000,97000]},{"i":179,"c":"도복·보호구","g":"펜싱화","v":"아자 (SKY)","p":[null,null,335000,null,null],"note":"2026년 가격표에서 빠진 품목"},{"i":180,"c":"키즈","g":"보호구","v":"브레이드 (플라스틱) Allstar","p":[null,null,126000,null,null],"note":"2026년 가격표에서 빠진 품목"}],"renamed":[{"g":"스타킹","v":"프로텍","note":"2025년 표에는 '울트라(Allstar, Uhlmann)'로 표기"},{"g":"전기장갑","v":"FIE (800N)","note":"2025년 표에는 FIE(1600N)으로 표기"}],"unmapped":[{"g":"에뻬 손잡이","v":"2022.09 26,000 · 2024.08 26,000","note":"확인됨 — 2025.05.07 사진 표부터 20,000원으로 바뀌어 프리모의 에뻬 손잡이(Viscont)와 같아졌습니다. 26,000원짜리는 그전까지 취급하던 다른 사양으로 보고 잇지 않았습니다"},{"g":"코치용 마스크","v":"2022.09 272,000 · 2024.08 294,000 · 2025.02 298,000","note":"확인됨 — 2025.02.25 사진 표의 298,000원이 프리모 표의 마스크 218,000 + 덮개 80,000과 정확히 일치합니다. 사진 표 쪽은 덮개 포함 가격이라 따로 두었습니다"},{"g":"펜싱화 켐파","v":"2022.09 258,000 · 2024.08 276,000","note":"이후 켐파가 Pro Agility / Multicolor / Junior로 갈려 어느 모델인지 불명. 2025.05.07 표에서는 켐파가 빠지고 휠라 249,000원으로 바뀌었는데, 휠라는 프리모 표에 없는 브랜드입니다"},{"g":"펜싱화 데상트 에너자이트 마르셰","v":"2022.09 259,000 · 2024.08 259,000","note":"프리모 표에 데상트 없음"}]};
+const SNAPS = DATA.snapshots, ITEMS = DATA.items, RENAMED = DATA.renamed, UNMAPPED = DATA.unmapped || [];
+const won = n => n == null ? "—" : n.toLocaleString("ko-KR");
+const fmtDate = s => s.slice(2).replace(/-/g, ".");
+const ym = s => s.slice(0, 7);
+
+/* 품목별 전체 시계열 = 차트에서 얻은 과거값 + 스냅샷 */
+ITEMS.forEach(it => {
+  it.series = [];
+  Object.entries(it.h || {}).forEach(([d, v]) => it.series.push([d, v]));
+  SNAPS.forEach((d, i) => { if (it.p[i] != null) it.series.push([ym(d), it.p[i]]); });
+  it.series.sort((x, y) => x[0] < y[0] ? -1 : 1);
+});
+
+let A = SNAPS.length - 2, B = SNAPS.length - 1;
+let state = { cat: "전체", q: "", sort: "rate", onlyup: false, open: null };
+
+function recompute() {
+  ITEMS.forEach(it => {
+    const a = it.p[A], b = it.p[B];
+    it.diff = (a != null && b != null) ? b - a : null;
+    it.rate = (a != null && b != null && a > 0) ? (b - a) / a : null;
+  });
+}
+
+/* ── 피스트 타임라인 ── */
+(function piste() {
+  const dates = new Set();
+  ITEMS.forEach(it => Object.keys(it.h || {}).forEach(d => dates.add(d)));
+  SNAPS.forEach(d => dates.add(ym(d)));
+  const pts = [...dates].sort();
+  const v = d => { const [y, m] = d.split("-").map(Number); return y * 12 + m; };
+  const lo = v(pts[0]), hi = v(pts[pts.length - 1]);
+  const L = 44, R = 956, x = d => L + (v(d) - lo) / (hi - lo) * (R - L);
+  const full = new Set(SNAPS.map(ym));
+  const Y = 50;
+  let s = `<defs><pattern id="hatch" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="0" y2="7" stroke="#CDD2D8" stroke-width="2.5"/></pattern></defs>`;
+  s += `<rect x="${L}" y="${Y - 15}" width="${R - L}" height="30" fill="#EDEFF2" stroke="#CDD2D8"/>`;
+  const mid = (L + R) / 2;
+  [[mid, 1.6, 0], [mid - 120, 1, 0], [mid + 120, 1, 0], [L + 60, 1, 1], [R - 60, 1, 1]].forEach(([cx, w, dash]) => {
+    s += `<line x1="${cx}" y1="${Y - 15}" x2="${cx}" y2="${Y + 15}" stroke="#CDD2D8" stroke-width="${w}"${dash ? ' stroke-dasharray="3 3"' : ""}/>`;
+  });
+  // 자료 공백 구간 (12개월 이상 벌어진 곳)
+  for (let i = 1; i < pts.length; i++) {
+    if (v(pts[i]) - v(pts[i - 1]) >= 12) {
+      const x1 = x(pts[i - 1]), x2 = x(pts[i]);
+      s += `<rect x="${x1}" y="${Y - 15}" width="${x2 - x1}" height="30" fill="url(#hatch)"/>`;
+      s += `<text x="${(x1 + x2) / 2}" y="${Y + 34}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="#8A919B" letter-spacing="1">자료 없음</text>`;
+    }
+  }
+  pts.forEach((d, i) => {
+    const cx = x(d), isFull = full.has(d);
+    s += `<g transform="translate(${cx},${Y})"><rect x="-5" y="-5" width="10" height="10" transform="rotate(45)" fill="${isFull ? "#2B3138" : "#FBFBFA"}" stroke="${isFull ? "#2B3138" : "#8A919B"}" stroke-width="1.5"/></g>`;
+    const up = i % 2 === 0;
+    s += `<text x="${cx}" y="${up ? Y - 24 : Y + 34}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="${isFull ? "#15181C" : "#8A919B"}">${d.replace("-", ".")}</text>`;
+  });
+  document.getElementById("piste").innerHTML = s;
+  document.getElementById("span-label").textContent =
+    `${pts[0].replace("-", ".")} – ${pts[pts.length - 1].replace("-", ".")} · ${pts.length}개 시점`;
+})();
+
+/* ── 시점 선택 ── */
+const opts = SNAPS.map((d, i) => `<option value="${i}">${fmtDate(d)}</option>`).join("");
+const selA = document.getElementById("selA"), selB = document.getElementById("selB");
+selA.innerHTML = opts; selB.innerHTML = opts;
+selA.value = A; selB.value = B;
+selA.onchange = () => { A = +selA.value; if (A >= B) { B = Math.min(A + 1, SNAPS.length - 1); selB.value = B; } update(); };
+selB.onchange = () => { B = +selB.value; if (B <= A) { A = Math.max(B - 1, 0); selA.value = A; } update(); };
+
+/* ── 요약 ── */
+function stats() {
+  const cmp = ITEMS.filter(i => i.rate != null);
+  const up = cmp.filter(i => i.rate > 0), flat = cmp.filter(i => i.rate === 0), down = cmp.filter(i => i.rate < 0);
+  const avg = cmp.reduce((s, i) => s + i.rate, 0) / cmp.length;
+  const top = [...cmp].sort((a, b) => b.rate - a.rate)[0];
+  const days = Math.round((new Date(SNAPS[B]) - new Date(SNAPS[A])) / 864e5);
+  const el = (k, v, n, hot) => `<div class="stat${hot ? " hot" : ""}"><div class="k">${k}</div><div class="v">${v}</div><div class="n">${n}</div></div>`;
+  document.getElementById("stats").innerHTML =
+    el("추적 품목", ITEMS.length, `${SNAPS.length}개 시점 · 이 구간 비교 ${cmp.length}개`) +
+    el("평균 인상률", (avg >= 0 ? "+" : "") + (avg * 100).toFixed(1) + "%", `${days}일 만에 · 월 환산 +${(avg * 100 / (days / 30.4)).toFixed(1)}%`, true) +
+    el("올랐다 / 동결", `${up.length} / ${flat.length}`, down.length ? `내린 품목 ${down.length}개` : "내린 품목 없음") +
+    el("최대 인상", (top.rate >= 0 ? "+" : "") + (top.rate * 100).toFixed(0) + "%", `${top.g} ${top.v}`.trim());
+  document.getElementById("subline").textContent =
+    `${fmtDate(SNAPS[A])} → ${fmtDate(SNAPS[B])} 가격표 비교 · 전체 ${ITEMS.length}개 품목`;
+  document.getElementById("thA").textContent = fmtDate(SNAPS[A]);
+  document.getElementById("thB").textContent = fmtDate(SNAPS[B]);
+  const na = ITEMS.length - cmp.length;
+  document.getElementById("gapnote").textContent = na
+    ? `이 구간 양쪽에 다 있는 품목만 인상률을 계산합니다 · 한쪽에만 있는 품목 ${na}개`
+    : `전 품목이 양쪽 가격표에 모두 있습니다`;
+}
+
+/* ── 카테고리 탭 ── */
+const CATS = ["전체", ...new Set(ITEMS.map(i => i.c))];
+document.getElementById("tabs").innerHTML = CATS.map(c =>
+  `<button class="tab" data-c="${c}" aria-pressed="${c === "전체"}">${c}</button>`).join("");
+document.getElementById("tabs").onclick = e => {
+  const b = e.target.closest(".tab"); if (!b) return;
+  state.cat = b.dataset.c; state.open = null;
+  [...document.querySelectorAll(".tab")].forEach(t => t.setAttribute("aria-pressed", t === b));
+  render();
+};
+document.getElementById("q").oninput = e => { state.q = e.target.value.trim(); state.open = null; render(); };
+document.getElementById("sort").onchange = e => { state.sort = e.target.value; render(); };
+document.getElementById("onlyup").onchange = e => { state.onlyup = e.target.checked; render(); };
+
+function filtered() {
+  const q = state.q.toLowerCase();
+  const out = ITEMS.filter(i =>
+    (state.cat === "전체" || i.c === state.cat) &&
+    (!state.onlyup || (i.rate != null && i.rate > 0)) &&
+    (!q || `${i.c} ${i.g} ${i.v}`.toLowerCase().includes(q)));
+  const S = {
+    rate: (a, b) => (b.rate ?? -9) - (a.rate ?? -9),
+    "rate-asc": (a, b) => (a.rate ?? 9) - (b.rate ?? 9),
+    diff: (a, b) => (b.diff ?? -1e9) - (a.diff ?? -1e9),
+    price: (a, b) => (b.p[B] ?? b.p[A] ?? 0) - (a.p[B] ?? a.p[A] ?? 0),
+    cat: (a, b) => a.i - b.i
+  };
+  return out.sort(S[state.sort]);
+}
+
+function pctCell(it) {
+  if (it.rate == null) {
+    const which = it.p[A] == null ? fmtDate(SNAPS[A]) : fmtDate(SNAPS[B]);
+    return `<span class="pct na">${which} 표에 없음</span>`;
+  }
+  if (it.rate === 0) return `<span class="pct flat">동결</span>`;
+  return `<span class="pct ${it.rate > 0 ? "up" : "down"}">${it.rate > 0 ? "+" : ""}${(it.rate * 100).toFixed(1)}%</span>`;
+}
+
+function render() {
+  const list = filtered();
+  document.getElementById("rows").innerHTML = list.map(it => {
+    const d = it.diff;
+    return `<tr class="row" data-id="${it.i}" tabindex="0" role="button" aria-expanded="${state.open === it.i}">
+      <td><span class="cat">${it.c}</span> <span class="nm">${it.g}</span> ${it.v ? `<span class="vr">${it.v}</span>` : ""}${it.note ? ` <span class="flag" title="${it.note}">표기 변경</span>` : ""}</td>
+      <td class="num hide-sm muted">${won(it.p[A])}</td>
+      <td class="num">${won(it.p[B])}</td>
+      <td class="num hide-sm ${d ? "" : "muted"}">${d == null ? "—" : (d > 0 ? "+" : "") + won(d)}</td>
+      <td class="num">${pctCell(it)}</td>
+    </tr>` + (state.open === it.i ? detailRow(it) : "");
+  }).join("");
+  document.getElementById("empty").hidden = list.length > 0;
+  if (state.open != null) drawChart(ITEMS.find(i => i.i === state.open));
+}
+
+function detailRow(it) {
+  const s = it.series;
+  if (s.length < 2) return `<tr class="detail"><td colspan="5"><div class="detail-inner">
+    <h3>${it.g} ${it.v}</h3><p class="meta">가격표 한 시점에만 등장한 품목이라 추이를 그릴 수 없습니다.</p></div></td></tr>`;
+  const first = s[0], last = s[s.length - 1];
+  const yv = d => Number(d.slice(0, 4)) + Number(d.slice(5)) / 12;
+  const yrs = yv(last[0]) - yv(first[0]);
+  const tot = (last[1] / first[1] - 1) * 100;
+  const cagr = yrs > 0 ? (Math.pow(last[1] / first[1], 1 / yrs) - 1) * 100 : 0;
+  return `<tr class="detail"><td colspan="5"><div class="detail-inner">
+    <h3>${it.g} ${it.v}</h3>
+    <p class="meta">${first[0].replace("-", ".")} ${won(first[1])}원 → ${last[0].replace("-", ".")} ${won(last[1])}원 ·
+    <b style="color:var(--up)">누적 ${tot >= 0 ? "+" : ""}${tot.toFixed(0)}%</b> · 연평균 ${cagr >= 0 ? "+" : ""}${cagr.toFixed(1)}%</p>
+    <svg class="chart" id="chart" preserveAspectRatio="none"></svg>
+  </div></td></tr>`;
+}
+
+function drawChart(it) {
+  const svg = document.getElementById("chart"); if (!svg) return;
+  const W = 1000, H = 210, PL = 66, PR = 16, PT = 26, PB = 30;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const s = it.series;
+  const v = d => { const [y, m] = d.split("-").map(Number); return y * 12 + m; };
+  const lo = v(s[0][0]), hi = v(s[s.length - 1][0]);
+  const vals = s.map(p => p[1]), min = Math.min(...vals) * 0.92, max = Math.max(...vals) * 1.06;
+  const X = d => hi === lo ? PL : PL + (v(d) - lo) / (hi - lo) * (W - PL - PR);
+  const Y = n => PT + (1 - (n - min) / (max - min)) * (H - PT - PB);
+  let g = `<defs><pattern id="h2" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="0" y2="7" stroke="#DDE1E6" stroke-width="2.5"/></pattern></defs>`;
+  [0, .5, 1].forEach(t => {
+    const val = min + (max - min) * t, y = Y(val);
+    g += `<line x1="${PL}" y1="${y}" x2="${W - PR}" y2="${y}" stroke="#E4E7EB"/>`;
+    g += `<text x="${PL - 9}" y="${y + 3.5}" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="10" fill="#8A919B">${Math.round(val / 1000).toLocaleString()}k</text>`;
+  });
+  for (let i = 1; i < s.length; i++) {
+    if (v(s[i][0]) - v(s[i - 1][0]) >= 12) {
+      const x1 = X(s[i - 1][0]), x2 = X(s[i][0]);
+      g += `<rect x="${x1}" y="${PT}" width="${x2 - x1}" height="${H - PT - PB}" fill="url(#h2)" opacity=".7"/>`;
+      g += `<text x="${(x1 + x2) / 2}" y="${PT + 13}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#8A919B">자료 공백</text>`;
+    }
+  }
+  g += `<polyline fill="none" stroke="#C42B22" stroke-width="2" stroke-linejoin="round" points="${s.map(p => `${X(p[0])},${Y(p[1])}`).join(" ")}"/>`;
+  s.forEach((p, i) => {
+    g += `<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="3.6" fill="#FBFBFA" stroke="#C42B22" stroke-width="2"/>`;
+    if (i === 0 || i === s.length - 1 || i % 2 === 0)
+      g += `<text x="${X(p[0])}" y="${Y(p[1]) - 12}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#15181C">${(p[1] / 1000).toFixed(0)}k</text>`;
+    g += `<text x="${X(p[0])}" y="${H - 9}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#8A919B">${p[0].replace("-", ".")}</text>`;
+  });
+  svg.innerHTML = g;
+}
+
+document.getElementById("rows").addEventListener("click", e => {
+  const tr = e.target.closest("tr.row"); if (!tr) return;
+  const id = Number(tr.dataset.id);
+  state.open = state.open === id ? null : id;
+  render();
+});
+document.getElementById("rows").addEventListener("keydown", e => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const tr = e.target.closest("tr.row"); if (!tr) return;
+  e.preventDefault(); tr.click();
+});
+
+document.getElementById("csv").onclick = () => {
+  const head = ["카테고리", "품목", "세부", ...SNAPS.map(fmtDate), "차액", "인상률(%)", "비고"];
+  const rows = filtered().map(i => [i.c, i.g, i.v, ...i.p.map(x => x ?? ""), i.diff ?? "",
+    i.rate == null ? "" : (i.rate * 100).toFixed(1), i.note || ""]);
+  const csv = "\uFEFF" + [head, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  a.download = `알스타_가격표_${SNAPS[A]}_${SNAPS[B]}.csv`; a.click(); URL.revokeObjectURL(a.href);
+};
+
+document.getElementById("renamed").innerHTML = RENAMED.map(r =>
+  `<li><b>${r.g} ${r.v}</b> — ${r.note}</li>`).join("");
+document.getElementById("unmapped").innerHTML = UNMAPPED.map(r =>
+  `<li><b>${r.g}</b> <span style="font-family:var(--mono);font-size:11.5px">${r.v}</span> — ${r.note}</li>`).join("");
+document.getElementById("foot").innerHTML =
+  `출처 — 프리모상사 가격표 ${SNAPS.map(fmtDate).join(" / ")}, 과거 추이는 스타텍스 세트·점박이 장갑·마라징 BF 에뻬 블레이드 3개 품목 차트.<br>
+   가격표 안내문 기준 원가·환율 변동 시 조정될 수 있는 가격이며, 실제 구매 전 총판 확인이 필요합니다.`;
+
+function update() { recompute(); stats(); render(); }
+update();
+</script>
+</body>
+</html>
